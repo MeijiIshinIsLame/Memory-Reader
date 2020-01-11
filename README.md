@@ -1,0 +1,1 @@
+I plan to mess aroud with data from other programs I use, so this is just a class I made to read memory in RAM because I will likely be doing that a lot. I will be updating this to include whatever stuff I need, but if you would like to use this as a reference or just straight up use it in your own projects feel free.
