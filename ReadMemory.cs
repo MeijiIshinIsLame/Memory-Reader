@@ -6,6 +6,9 @@ using System.Text;
 public class MemoryReader
 {
     const int PROCESS_WM_READ = 0x0010; //specifies that we are reading memory
+    private string processName;
+    private Process process;
+    private IntPtr processHandle;
     
     [DllImport("kernel32.dll")]
     public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
@@ -13,7 +16,14 @@ public class MemoryReader
     [DllImport("kernel32.dll")]
     public static extern bool ReadProcessMemory(int hProcess, int lpBaseAddress, byte[] lpBuffer, int dwSize, ref int lpNumberOfBytesRead);
 
-    public static Process OpenProcess(string processName)
+    public MemoryReader(string _processName)
+    {
+        this.processName = _processName;
+        this.process = GetProcessFromName(processName);
+        this.processHandle = GetProcessHandle(process);
+    }
+
+    public static Process GetProcessFromName(string processName)
     {
         try
         {
@@ -25,14 +35,17 @@ public class MemoryReader
         {
             Console.WriteLine(e.Message);
             Console.WriteLine("Process may not be open, or the process name may be wrong.");
-            return null; //stop program
+            return null;
         }
     }
 
-    public static int ReadAddress(Process process, int addr)
+    public static IntPtr GetProcessHandle(Process process)
     {
-        IntPtr processHandle = OpenProcess(PROCESS_WM_READ, false, process.Id); 
+        return OpenProcess(PROCESS_WM_READ, false, process.Id); 
+    }
 
+    public int ReadAddress(int addr)
+    {
         int bytesRead = 0;
         byte[] buffer = new byte[4];
 
@@ -44,25 +57,24 @@ public class MemoryReader
         {
             Console.WriteLine(e.Message);
             Console.WriteLine("Cannot read address");
-            return 0; //stop program
+            return 0;
         }
         return BitConverter.ToInt32(buffer, 0);
     }
 
-    public static int ReadMultiLevelPointer(Process process, int[] offsets)
+    public int ReadMultiLevelPointer(int[] offsets)
     {
         int baseaddr = process.MainModule.BaseAddress.ToInt32() + offsets[0];
-        Int32 contents = contents = ReadAddress(process, baseaddr);
+        Int32 contents = ReadAddress(baseaddr);
 
         foreach(int offset in offsets)
         {
             if (offset == offsets[0]) //we already used first index
                 continue;
 
-            contents = ReadAddress(process, contents + offset);
+            contents = ReadAddress(contents + offset);
         }
 
         return contents;
     }
 }
-
