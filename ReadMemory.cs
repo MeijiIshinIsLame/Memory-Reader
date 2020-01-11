@@ -41,7 +41,16 @@ public class MemoryReader
 
     public static IntPtr GetProcessHandle(Process process)
     {
-        return OpenProcess(PROCESS_WM_READ, false, process.Id); 
+        try
+        {
+            return OpenProcess(PROCESS_WM_READ, false, process.Id); 
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            Console.WriteLine("Could not get process handle. Check if the process is still open, or if the name is correct.");
+            return IntPtr.Zero; //returns null
+        }
     }
 
     public int ReadAddress(int addr)
